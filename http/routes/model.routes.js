@@ -6,7 +6,7 @@ const utilsMulter = require('../../utils/multer')
 const validator = require('../validator')
 
 router.get('/models', isAuthenticated, modelController.getModels)
-router.get('/model/:id', isAuthenticated, validator.getModel, modelController.getModel)
-router.post('/model', isAuthenticated, utilsMulter.uploadModel, validator.saveModel, modelController.saveModel)
+router.get('/models/:id', isAuthenticated, validator.getModel, modelController.getModel)
+router.post('/models', isAuthenticated, utilsMulter.uploadModel, validator.saveModel, modelController.saveModel)
 
 module.exports = router
