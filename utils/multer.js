@@ -3,15 +3,14 @@ const path = require('path')
 const fs = require('fs')
 const mongoose = require('mongoose')
 
+const { FILE_TYPES, MAX_SIZE_FILE } = require('../constants')
+
 // Check file type
 function checkType(file, cb) {
-    // Allowed file types
-    const fileTypes = ['.py', '.sav']
-
     // Check ext
     const extFileName = path.extname(file.originalname).toLowerCase()
 
-    if (fileTypes.includes(extFileName))
+    if (FILE_TYPES.includes(extFileName))
         return cb(null, true)
     else
         return cb(new Error('INVALID_TYPE'))
@@ -48,7 +47,6 @@ const modelStorage = multer.diskStorage({
 })
 
 // Upload file
-const MAX_SIZE_FILE = 5 * 1024 * 1024 // 5MB = 5 * 1024 * 1024 Bytes
 async function uploadModel(req, res, next) {
     const multerUploader = multer({
         storage: modelStorage,

@@ -2,7 +2,7 @@ const express = require('express')
 const multer = require('multer')
 const request = require('supertest')
 
-const { saveModel } = require('../http/validator')
+const { savePredDockerPyModel } = require('../http/validator')
 
 // Configure multer
 const upload = multer()
@@ -15,7 +15,7 @@ const mockController = (req, res) => {
 const app = express()
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
-app.post('/save-model', upload.none(), saveModel, mockController)
+app.post('/models/predictives/docker/python', upload.single('file'), savePredDockerPyModel, mockController)
 
 describe('saveModel Validator Middleware', () => {
     it('should pass validation for a valid request', async () => {
@@ -24,9 +24,10 @@ describe('saveModel Validator Middleware', () => {
             type: 'predictive',
             engine: 'docker',
             language: 'Python3',
+            serialization: 'joblib',
             features: JSON.stringify([
+                { name: 'glasses', type: 'boolean', order: 2 },
                 { name: 'age', type: 'int', order: 1 },
-                { name: 'glasses', type: 'bool', order: 2 },
                 { name: 'city_code', type: 'float', order: 3 },
             ]),
             dependencies: JSON.stringify([
@@ -37,13 +38,15 @@ describe('saveModel Validator Middleware', () => {
         }
 
         const response = await request(app)
-            .post('/save-model')
+            .post('/models/predictives/docker/python')
             .field('name', validRequest.name)
             .field('type', validRequest.type)
             .field('engine', validRequest.engine)
             .field('language', validRequest.language)
+            .field('serialization', validRequest.serialization)
             .field('features', validRequest.features)
             .field('dependencies', validRequest.dependencies)
+            .attach('file', './__tests__/data/model.sav')
 
         expect(response.status).toBe(200)
         expect(response.body.message).toBe('Passed validation')
@@ -64,16 +67,17 @@ describe('saveModel Validator Middleware', () => {
         }
 
         const response = await request(app)
-            .post('/save-model')
+            .post('/models/predictives/docker/python')
             .field('name', invalidRequest.name)
             .field('type', invalidRequest.type)
             .field('engine', invalidRequest.engine)
             .field('language', invalidRequest.language)
             .field('features', invalidRequest.features)
             .field('dependencies', invalidRequest.dependencies)
+            .attach('file', './__tests__/data/model.sav')
 
         expect(response.status).toBe(400)
-        expect(response.body.errors).toBeInstanceOf(Array)
-        expect(response.body.errors).not.toHaveLength(0)
+        expect(response.body.error).toBeInstanceOf(Array)
+        expect(response.body.error).not.toHaveLength(0)
     })
 })

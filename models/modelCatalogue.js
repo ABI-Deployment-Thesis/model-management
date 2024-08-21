@@ -1,6 +1,6 @@
 const { Schema, model } = require('mongoose')
 
-const { MODEL_TYPES, ENGINES, LANGUAGES } = require('../constants')
+const { NONE, MODEL_TYPES, ENGINES, LANGUAGES, SERIALIZATION_ALG } = require('../constants')
 
 const ModelCatalogueSchema = new Schema({
     user_id: {
@@ -34,8 +34,16 @@ const ModelCatalogueSchema = new Schema({
     language: {
         type: String,
         trim: true,
-        enum: LANGUAGES,
-        required: false,
+        enum: LANGUAGES.concat([NONE]),
+        required: true,
+        default: NONE
+    },
+    serialization: {
+        type: String,
+        trim: true,
+        enum: SERIALIZATION_ALG.concat([NONE]),
+        required: true,
+        default: NONE
     },
     dependencies: {
         type: [
@@ -44,7 +52,8 @@ const ModelCatalogueSchema = new Schema({
                 ref: 'dependency'
             }
         ],
-        required: false
+        required: true,
+        default: []
     },
     features: {
         type: [
@@ -53,7 +62,8 @@ const ModelCatalogueSchema = new Schema({
                 ref: 'feature'
             }
         ],
-        required: false
+        required: true,
+        default: []
     },
     deleted: {
         type: Boolean,

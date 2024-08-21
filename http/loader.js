@@ -9,12 +9,12 @@ app.use((req, res, next) => {
     next()
 })
 
+app.use(express.json())
+app.use(express.urlencoded({ extended: false }))
+
 app.get('/', (req, res) => {
     res.json({ message: 'Hello World' })
 })
-
-app.use(express.json())
-app.use(express.urlencoded({ extended: false }))
 
 // Import routes
 const modelRouter = require('./routes/model.routes')
