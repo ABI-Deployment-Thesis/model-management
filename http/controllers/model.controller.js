@@ -38,6 +38,7 @@ async function saveModel(req, res, next) {
         const type = req.body.type
         const engine = req.body.engine
         const language = req.body.language
+        const serialization =req.body.serialization
         const features = JSON.parse(req.body.features)
         const dependencies = JSON.parse(req.body.dependencies)
 
@@ -48,7 +49,8 @@ async function saveModel(req, res, next) {
             type: type,
             file_path: filePath,
             engine: engine,
-            language: language
+            language: language,
+            serialization: serialization
         })
 
         const feature = await Feature.insertMany(features)
@@ -57,7 +59,7 @@ async function saveModel(req, res, next) {
         modelCatalogue.dependencies.push(...requirement)
         modelCatalogue.features.push(...feature)
 
-        await handleEngine(engine, type, language, dependencies, path.dirname(filePath))
+        await handleEngine(engine, type, language, serialization, dependencies, path.dirname(filePath))
 
         await modelCatalogue.save()
         res.status(201).json({ message: `Model ${id} saved successfully` })
