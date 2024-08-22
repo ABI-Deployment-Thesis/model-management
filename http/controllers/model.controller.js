@@ -39,8 +39,8 @@ async function saveModel(req, res, next) {
         const engine = req.body.engine
         const language = req.body.language
         const serialization =req.body.serialization
-        const features = JSON.parse(req.body.features)
-        const dependencies = JSON.parse(req.body.dependencies)
+        const features = req.body.features
+        const dependencies = req.body.dependencies
 
         const modelCatalogue = await new ModelCatalogue({
             _id: id,
@@ -59,7 +59,11 @@ async function saveModel(req, res, next) {
         modelCatalogue.dependencies.push(...requirement)
         modelCatalogue.features.push(...feature)
 
-        await handleEngine(engine, type, language, serialization, dependencies, path.dirname(filePath))
+        let destPath = path.dirname(filePath)
+        if (fs.lstatSync(filePath).isDirectory()) {
+            destPath = filePath
+        }
+        await handleEngine(engine, type, language, serialization, dependencies, destPath)
 
         await modelCatalogue.save()
         res.status(201).json({ message: `Model ${id} saved successfully` })
