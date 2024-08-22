@@ -1,5 +1,5 @@
 const fs = require('fs')
-const { PREDICTIVE, DOCKER, PYTHON3, R } = require('./../../constants')
+const { PREDICTIVE, OPTIMIZATION, DOCKER, PYTHON3, R } = require('./../../constants')
 
 async function handleEngine(engine, type, language, serialization, dependencies, folderPath) {
     if (engine == DOCKER) {
@@ -31,6 +31,15 @@ async function handleDockerEngine(type, language, serialization, dependencies, f
             })
             await replaceTextInFile(`./utils/engines/docker/templates/predictive/R/Dockerfile`, '#<DEPENDENCIES>', installLibsText, `${folderPath}/Dockerfile`)
             await replaceTextInFile(`./utils/engines/docker/templates/predictive/R/app.R`, '#<DEPENDENCIES>', loadLibsText, `${folderPath}/app.R`)
+        }
+    } else if (type == OPTIMIZATION) {
+        if (language == PYTHON3) {
+            let requirements = ''
+            dependencies.forEach(library => {
+                requirements += `${library.library}==${library.version}\n`
+            })
+            await fs.writeFileSync(`${folderPath}/requirements.txt`, requirements)
+            await fs.copyFileSync(`./utils/engines/docker/templates/optimization/Python3/Dockerfile`, `${folderPath}/Dockerfile`)
         }
     }
 }

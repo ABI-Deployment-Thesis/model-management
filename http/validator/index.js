@@ -1,9 +1,10 @@
 const path = require('path')
 const fs = require('fs')
+const unzipper = require('unzipper')
 
 const { param, body, validationResult } = require('express-validator')
 
-const { PYTHON3, R, FEATURE_TYPES, MODEL_TYPES, ENGINES, LANGUAGES, PY_SERIALIZATION_ALG, NAME_REGEX, PY_FILE_TYPES, R_FILE_TYPES } = require('../../constants')
+const { PREDICTIVE, OPTIMIZATION, DOCKER, PYTHON3, R, FEATURE_TYPES, PY_SERIALIZATION_ALG, NAME_REGEX, PY_FILE_TYPES, R_FILE_TYPES, COMPRESSION_FILE_TYPES } = require('../../constants')
 
 // Utils
 const validate = (req, res, next) => {
@@ -15,45 +16,84 @@ const validate = (req, res, next) => {
     next()
 }
 
-const deleteFile = (req) => {
+const deleteFile = async (req) => {
     if (req.file && req.file.path) {
         const filePath = path.dirname(req.file.path)
-        if (fs.existsSync(filePath)) {
+        if (await fs.existsSync(filePath)) {
             logger.debug(`Deleting folder '${filePath}'`)
-            fs.rmSync(filePath, { recursive: true, force: true })
+            await fs.rmSync(filePath, { recursive: true, force: true })
         }
     }
 }
 
-const fileNotEmpty = (req, res, next) => {
-    if (!req.file)
-        return res.status(400).json({ error: 'Model file is required' })
-
-    const extFileName = path.extname(req.file.originalname).toLowerCase()
-    switch (req.body.language) {
-        case PYTHON3:
-            if (!PY_FILE_TYPES.includes(extFileName)) {
-                deleteFile(req)
-                return res.status(400).json({ error: 'Invalid file type' })
-            }
-            break;
-        case R:
-            if (!R_FILE_TYPES.includes(extFileName)) {
-                deleteFile(req)
-                return res.status(400).json({ error: 'Invalid file type' })
-            }
-            break;
-        default:
-            deleteFile(req)
-            return res.status(400).json({ error: 'Invalid file type' })
+const validateFileExtension = (extFileName, validExtensions, errorMessage) => {
+    if (!validExtensions.includes(extFileName)) {
+        throw new Error(errorMessage)
     }
-    next()
+}
+
+const handlePredictiveModel = (language, extFileName) => {
+    switch (language) {
+        case PYTHON3:
+            validateFileExtension(extFileName, PY_FILE_TYPES, 'Invalid file type for Python predictive model')
+            break
+        case R:
+            validateFileExtension(extFileName, R_FILE_TYPES, 'Invalid file type for R predictive model')
+            break
+        default:
+            throw new Error('Unsupported language for predictive model')
+    }
+}
+
+const handleOptimizationModel = async (language, extFileName, filePath) => {
+    validateFileExtension(extFileName, COMPRESSION_FILE_TYPES, 'Invalid file type for optimization model')
+
+    const mainFileName = language === PYTHON3 ? 'main.py' : language === R ? 'main.r' : null
+    if (!mainFileName) throw new Error('Unsupported language for optimization model')
+
+    const destPath = path.join(path.dirname(filePath), 'model')
+    await unzip(filePath, destPath)
+    const files = await fs.promises.readdir(destPath)
+
+    if (!files.includes(mainFileName)) {
+        throw new Error(`${mainFileName} is required in the optimization model`)
+    }
+
+    await fs.promises.rm(filePath, { recursive: true, force: true })
+    return destPath
+}
+
+const fileNotEmpty = async (req, res, next) => {
+    try {
+        if (!req.file) throw new Error('Model file is required')
+
+        const extFileName = path.extname(req.file.originalname).toLowerCase()
+
+        if (req.body.type === PREDICTIVE) {
+            handlePredictiveModel(req.body.language, extFileName)
+        } else if (req.body.type === OPTIMIZATION) {
+            req.file.path = await handleOptimizationModel(req.body.language, extFileName, req.file.path)
+        } else {
+            throw new Error('Invalid model type')
+        }
+
+        next()
+    } catch (err) {
+        logger.error(err.message)
+        deleteFile(req)
+        res.status(400).json({ error: err.message })
+    }
+}
+
+async function unzip(zipPath, destPath) {
+    const directory = await unzipper.Open.file(zipPath)
+    await directory.extract({ path: destPath })
 }
 
 // Custom validator function to check features
 const validateFeatures = (value) => {
     try {
-        const features = JSON.parse(value)
+        const features = value
         if (!Array.isArray(features)) {
             throw new Error('Features must be an array')
         }
@@ -85,7 +125,7 @@ const validateFeatures = (value) => {
 
 const validateDependencies = (value) => {
     try {
-        const dependencies = JSON.parse(value)
+        const dependencies = value
         if (!Array.isArray(dependencies)) {
             throw new Error('Dependencies must be an array')
         }
@@ -104,7 +144,7 @@ const validateDependencies = (value) => {
 }
 
 const checkSerializationInDependencies = async (req, res, next) => {
-    const dependencies = JSON.parse(req.body.dependencies)
+    const dependencies = req.body.dependencies
     const serialization = req.body.serialization
     let hasSerialization = false
     dependencies.forEach(dependency => {
@@ -129,10 +169,18 @@ const getModel = [
 // Validator for savePredDockerPyModel
 const savePredDockerPyModel = [
     (req, res, next) => {
-        req.body.type = "predictive"
-        req.body.engine = "docker"
-        req.body.language = "Python3"
-        next()
+        try {
+            req.body.type = PREDICTIVE
+            req.body.engine = DOCKER
+            req.body.language = PYTHON3
+            req.body.features = JSON.parse(req.body.features)
+            req.body.dependencies = JSON.parse(req.body.dependencies)
+            next()
+        } catch (err) {
+            logger.error(err)
+            deleteFile(req)
+            res.status(400).json({ error: 'features and dependencies must be a valid JSON array with correct structure' })
+        }
     },
     fileNotEmpty,
     body('name')
@@ -152,10 +200,18 @@ const savePredDockerPyModel = [
 // Validator for savePredDockerRModel
 const savePredDockerRModel = [
     (req, res, next) => {
-        req.body.type = "predictive"
-        req.body.engine = "docker"
-        req.body.language = "R"
-        next()
+        try {
+            req.body.type = PREDICTIVE
+            req.body.engine = DOCKER
+            req.body.language = R
+            req.body.features = JSON.parse(req.body.features)
+            req.body.dependencies = JSON.parse(req.body.dependencies)
+            next()
+        } catch (err) {
+            logger.error(err)
+            deleteFile(req)
+            res.status(400).json({ error: 'features and dependencies must be a valid JSON array with correct structure' })
+        }
     },
     fileNotEmpty,
     body('name')
@@ -169,8 +225,34 @@ const savePredDockerRModel = [
     validate
 ]
 
+// Validator for saveOptDockerPyModel
+const saveOptDockerPyModel = [
+    (req, res, next) => {
+        try {
+            req.body.type = OPTIMIZATION
+            req.body.engine = DOCKER
+            req.body.language = PYTHON3
+            req.body.features = []
+            req.body.dependencies = JSON.parse(req.body.dependencies)
+            next()
+        } catch (err) {
+            logger.error(err)
+            deleteFile(req)
+            res.status(400).json({ error: 'features and dependencies must be a valid JSON array with correct structure' })
+        }
+    },
+    fileNotEmpty,
+    body('name')
+        .isString().withMessage('Name must be a string')
+        .matches(NAME_REGEX).withMessage('Name must be between 2 and 50 characters')
+        .escape(),
+    body('dependencies')
+        .custom(validateDependencies),
+    validate
+]
 module.exports = {
     getModel,
     savePredDockerPyModel,
-    savePredDockerRModel
+    savePredDockerRModel,
+    saveOptDockerPyModel
 }
