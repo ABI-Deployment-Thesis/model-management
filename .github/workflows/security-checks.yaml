@@ -2,10 +2,11 @@ name: Security checks
 
 on:
   pull_request:
+    branches: [master, main]
 
 jobs:
-  trivy-file-system:
-    name: Trivy fs scan
+  trivy_file_system:
+    name: Trivy file system scan
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
