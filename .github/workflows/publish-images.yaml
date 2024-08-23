@@ -1,3 +1,4 @@
+# https://docs.github.com/en/actions/use-cases-and-examples/publishing-packages/publishing-docker-images
 name: Publish Docker image
 
 on:
@@ -20,7 +21,7 @@ jobs:
       attestations: write
       id-token: write
     steps:
-      - name: Check out the repo
+      - name: Checkout code
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 #v4.1.7
 
       - name: Log in to Docker Hub
@@ -29,7 +30,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Log in to the Container registry
+      - name: Log in to GitHub Container registry
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 #v3.3.0
         with:
           registry: ghcr.io
@@ -53,7 +54,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Generate artifact attestation to GitHub
+      - name: Generate artifact attestation to GitHub Container registry
         uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 #v1.4.1
         with:
           subject-name: ${{ env.GITHUB_REGISTRY }}/${{ env.GITHUB_IMAGE_NAME }}
