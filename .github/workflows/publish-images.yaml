@@ -9,7 +9,7 @@ env:
   GITHUB_REGISTRY: ghcr.io
   DOCKERHUB_REGISTRY: index.docker.io
   GITHUB_IMAGE_NAME: ${{ github.repository }}
-  DOCKERHUB_IMAGE_NAME: ruigomes99/model-management
+  DOCKERHUB_IMAGE_NAME: ruigomes99/${{ github.event.repository.name }}
 
 jobs:
   push_to_registries:

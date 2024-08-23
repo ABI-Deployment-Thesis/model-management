@@ -11,7 +11,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 #v4.1.7
       - name: Build Docker image
-        run: docker build -t model-management:ci .
+        run: docker build -t ${{ github.event.repository.name }}:ci .
 
   # https://docs.github.com/en/actions/use-cases-and-examples/building-and-testing/building-and-testing-nodejs
   unit_tests:
