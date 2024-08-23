@@ -5,7 +5,7 @@ WORKDIR /usr/src/app
 COPY package*.json .
 
 RUN npm ci
-RUN np install -g nodemon
+RUN npm install -g nodemon
 
 COPY . .
 
