@@ -4,6 +4,12 @@ on:
   release:
     types: [published]
 
+env:
+  GITHUB_REGISTRY: ghcr.io
+  DOCKERHUB_REGISTRY: index.docker.io
+  GITHUB_IMAGE_NAME: ${{ github.repository }}
+  DOCKERHUB_IMAGE_NAME: ruigomes99/model-management
+
 jobs:
   push_to_registries:
     name: Push Docker image to multiple registries
@@ -35,8 +41,8 @@ jobs:
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 #v5.5.1
         with:
           images: |
-            ruigomes99/model-management
-            ghcr.io/${{ github.repository }}
+            ${{ env.DOCKERHUB_IMAGE_NAME}}
+            ${{ env.GITHUB_REGISTRY }}/${{ env.GITHUB_IMAGE_NAME }}
 
       - name: Build and push Docker images
         id: push
@@ -47,9 +53,16 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Generate artifact attestation
+      - name: Generate artifact attestation to GitHub
         uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 #v1.4.1
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+          subject-name: ${{ env.GITHUB_REGISTRY }}/${{ env.GITHUB_IMAGE_NAME }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Generate artifact attestation to Docker Hub
+        uses: actions/attest-build-provenance@6149ea5740be74af77f260b9db67e633f6b0a9a1 #v1.4.1
+        with:
+          subject-name: ${{ env.DOCKERHUB_REGISTRY }}/${{ env.DOCKERHUB_IMAGE_NAME }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
