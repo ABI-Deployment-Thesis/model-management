@@ -13,7 +13,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 
 app.get('/', (req, res) => {
-    res.json({ message: 'Hello World' })
+    res.status(200).json({ message: 'Hello World' })
 })
 
 // Import routes
