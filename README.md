@@ -30,7 +30,7 @@ For a detailed explanation of the proposed architecture and its deployment strat
     - Exposes a REST API on the default port 3002.
     - Exposes a gRPC API on the default port 50052.
 - Egress
-    - Saves files related to intelligent models uploaded by users to storage.
+    - Saves user-uploaded files related to intelligent models to storage.
 - Both
     - Communicates with MongoDB to save and retrieve data.
 
