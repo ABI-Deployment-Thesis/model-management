@@ -38,7 +38,7 @@ async function saveModel(req, res, next) {
         const type = req.body.type
         const engine = req.body.engine
         const language = req.body.language
-        const serialization =req.body.serialization
+        const serialization = req.body.serialization
         const features = req.body.features
         const dependencies = req.body.dependencies
 
