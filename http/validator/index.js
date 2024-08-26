@@ -4,7 +4,21 @@ const unzipper = require('unzipper')
 
 const { param, body, validationResult } = require('express-validator')
 
-const { PREDICTIVE, OPTIMIZATION, DOCKER, PYTHON3, R, FEATURE_TYPES, PY_SERIALIZATION_ALG, NAME_REGEX, PY_FILE_TYPES, R_FILE_TYPES, COMPRESSION_FILE_TYPES } = require('../../constants')
+const {
+    PREDICTIVE,
+    OPTIMIZATION,
+    DOCKER,
+    PYTHON3,
+    R,
+    RDS,
+    FEATURE_TYPES,
+    PY_SERIALIZATION_ALG,
+    NATIVE_SERIALIZATION_ALG,
+    NAME_REGEX,
+    PY_FILE_TYPES,
+    R_FILE_TYPES,
+    COMPRESSION_FILE_TYPES
+} = require('../../constants')
 
 // Utils
 const validate = (req, res, next) => {
@@ -147,11 +161,15 @@ const checkSerializationInDependencies = async (req, res, next) => {
     const dependencies = req.body.dependencies
     const serialization = req.body.serialization
     let hasSerialization = false
-    dependencies.forEach(dependency => {
-        if (dependency.library == serialization) {
-            hasSerialization = true
-        }
-    })
+    if (NATIVE_SERIALIZATION_ALG.includes(serialization)) { // Native language serialization algorithms
+        hasSerialization = true
+    } else {
+        dependencies.forEach(dependency => {
+            if (dependency.library == serialization) {
+                hasSerialization = true
+            }
+        })
+    }
     if (!hasSerialization) {
         await deleteFile(req)
         return res.status(400).json({ error: 'Dependencies must include the serialization library' })
@@ -172,6 +190,7 @@ const savePredDockerPyModel = [
         try {
             req.body.type = PREDICTIVE
             req.body.engine = DOCKER
+            req.body.cpu_percentage = req.body.cpu_percentage == undefined ? 500000000 : Number(req.body.cpu_percentage) * 10000000
             req.body.language = PYTHON3
             req.body.features = JSON.parse(req.body.features)
             req.body.dependencies = JSON.parse(req.body.dependencies)
@@ -203,6 +222,8 @@ const savePredDockerRModel = [
         try {
             req.body.type = PREDICTIVE
             req.body.engine = DOCKER
+            req.body.cpu_percentage = req.body.cpu_percentage == undefined ? 500000000 : Number(req.body.cpu_percentage) * 10000000
+            req.body.serialization = RDS
             req.body.language = R
             req.body.features = JSON.parse(req.body.features)
             req.body.dependencies = JSON.parse(req.body.dependencies)
@@ -231,6 +252,7 @@ const saveOptDockerPyModel = [
         try {
             req.body.type = OPTIMIZATION
             req.body.engine = DOCKER
+            req.body.cpu_percentage = req.body.cpu_percentage == undefined ? 500000000 : Number(req.body.cpu_percentage) * 10000000
             req.body.language = PYTHON3
             req.body.features = []
             req.body.dependencies = JSON.parse(req.body.dependencies)

@@ -37,6 +37,8 @@ async function saveModel(req, res, next) {
         const name = req.body.name
         const type = req.body.type
         const engine = req.body.engine
+        const mem_limit = req.body.mem_limit
+        const cpu_percentage = req.body.cpu_percentage
         const language = req.body.language
         const serialization = req.body.serialization
         const features = req.body.features
@@ -49,6 +51,8 @@ async function saveModel(req, res, next) {
             type: type,
             file_path: filePath,
             engine: engine,
+            mem_limit: mem_limit,
+            cpu_percentage: cpu_percentage,
             language: language,
             serialization: serialization
         })
@@ -73,8 +77,9 @@ async function saveModel(req, res, next) {
         // error: TypeError: Cannot read properties of undefined (reading 'path')
         if (req.file && req.file.path) {
             const filePath = path.dirname(req.file.path)
-            if (fs.existsSync(filePath)) {
-                fs.rmSync(filePath, { recursive: true, force: true })
+            if (await fs.existsSync(filePath)) {
+                logger.debug(`Deleting folder '${filePath}'`)
+                await fs.rmSync(filePath, { recursive: true, force: true })
             }
         }
         res.status(400).json({ error: err })

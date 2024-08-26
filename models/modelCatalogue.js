@@ -31,6 +31,18 @@ const ModelCatalogueSchema = new Schema({
         required: true,
         default: 'docker'
     },
+    mem_limit: {
+        type: String,
+        trim: true,
+        required: true,
+        default: '256M'
+    },
+    cpu_percentage: {
+        type: Number,
+        trim: true,
+        required: true,
+        default: 500000000
+    },
     language: {
         type: String,
         trim: true,

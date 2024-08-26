@@ -6,6 +6,7 @@ const PYTHON3 = 'Python3'
 const R = 'R'
 const JOBLIB = 'joblib'
 const PICKLE = 'pickle'
+const RDS = 'RDS'
 
 const FEATURE_TYPES = ['int', 'float', 'boolean', 'string']
 const MODEL_TYPES = [PREDICTIVE, OPTIMIZATION]
@@ -14,8 +15,9 @@ const OPT_ENGINES = ['TBA']
 const ENGINES = PRED_ENGINES.concat(OPT_ENGINES)
 const LANGUAGES = [PYTHON3, R]
 const PY_SERIALIZATION_ALG = [JOBLIB, PICKLE]
-const R_SERIALIZATION_ALG = ['RDS']
+const R_SERIALIZATION_ALG = [RDS]
 const SERIALIZATION_ALG = PY_SERIALIZATION_ALG.concat(R_SERIALIZATION_ALG)
+const NATIVE_SERIALIZATION_ALG = [PICKLE, RDS]
 
 const NAME_REGEX = /^.{2,50}$/
 
@@ -32,6 +34,7 @@ module.exports = {
     DOCKER,
     PYTHON3,
     R,
+    RDS,
 
     FEATURE_TYPES,
     MODEL_TYPES,
@@ -39,6 +42,7 @@ module.exports = {
     LANGUAGES,
     PY_SERIALIZATION_ALG,
     SERIALIZATION_ALG,
+    NATIVE_SERIALIZATION_ALG,
 
     NAME_REGEX,
 
