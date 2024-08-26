@@ -37,6 +37,7 @@ async function saveModel(req, res, next) {
         const name = req.body.name
         const type = req.body.type
         const engine = req.body.engine
+        const docker_tag = req.body.docker_tag
         const mem_limit = req.body.mem_limit
         const cpu_percentage = req.body.cpu_percentage
         const language = req.body.language
@@ -51,6 +52,7 @@ async function saveModel(req, res, next) {
             type: type,
             file_path: filePath,
             engine: engine,
+            docker_tag: docker_tag,
             mem_limit: mem_limit,
             cpu_percentage: cpu_percentage,
             language: language,
@@ -67,7 +69,7 @@ async function saveModel(req, res, next) {
         if (fs.lstatSync(filePath).isDirectory()) {
             destPath = filePath
         }
-        await handleEngine(engine, type, language, serialization, dependencies, destPath)
+        await handleEngine(engine, type, language, serialization, docker_tag, dependencies, destPath)
 
         await modelCatalogue.save()
         res.status(201).json({ message: `Model ${id} saved successfully` })

@@ -190,6 +190,7 @@ const savePredDockerPyModel = [
         try {
             req.body.type = PREDICTIVE
             req.body.engine = DOCKER
+            req.body.docker_tag = req.body.docker_tag == undefined ? '3.9' : req.body.docker_tag
             req.body.cpu_percentage = req.body.cpu_percentage == undefined ? 500000000 : Number(req.body.cpu_percentage) * 10000000
             req.body.language = PYTHON3
             req.body.features = JSON.parse(req.body.features)
@@ -222,6 +223,7 @@ const savePredDockerRModel = [
         try {
             req.body.type = PREDICTIVE
             req.body.engine = DOCKER
+            req.body.docker_tag = req.body.docker_tag == undefined ? '24.04' : req.body.docker_tag
             req.body.cpu_percentage = req.body.cpu_percentage == undefined ? 500000000 : Number(req.body.cpu_percentage) * 10000000
             req.body.serialization = RDS
             req.body.language = R
@@ -252,6 +254,7 @@ const saveOptDockerPyModel = [
         try {
             req.body.type = OPTIMIZATION
             req.body.engine = DOCKER
+            req.body.docker_tag = req.body.docker_tag == undefined ? '3.9' : req.body.docker_tag
             req.body.cpu_percentage = req.body.cpu_percentage == undefined ? 500000000 : Number(req.body.cpu_percentage) * 10000000
             req.body.language = PYTHON3
             req.body.features = []

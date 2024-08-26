@@ -31,6 +31,12 @@ const ModelCatalogueSchema = new Schema({
         required: true,
         default: 'docker'
     },
+    docker_tag: {
+        type: String,
+        trim: true,
+        required: true,
+        default: 'latest'
+    },
     mem_limit: {
         type: String,
         trim: true,
