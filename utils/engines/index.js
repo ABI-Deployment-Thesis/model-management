@@ -16,22 +16,22 @@ async function handleDockerEngine(type, language, serialization, docker_tag, dep
             })
             await fs.writeFileSync(`${folderPath}/requirements.txt`, requirements)
             await replaceTextInFile(`./utils/engines/docker/templates/predictive/Python3/Dockerfile`, '#<DOCKER_TAG>', docker_tag, `${folderPath}/Dockerfile`)
-            await fs.copyFileSync(`./utils/engines/docker/templates/predictive/Python3/${serialization}.py`, `${folderPath}/app.py`)
+            await fs.copyFileSync(`./utils/engines/docker/templates/predictive/Python3/${serialization}.py`, `${folderPath}/main.py`)
         }
         if (language == R) {
             let installLibsText = ''
             let loadLibsText = ''
             dependencies.forEach(library => {
                 if (library.version == 'latest') {
-                    installLibsText += `RUN R -e "install.packages('${library.library}')"\n`
+                    installLibsText += `RUN R -e "install.packages('${library.library}', repos='http://cran.rstudio.com/')"\n`
                 } else {
-                    installLibsText += `RUN R -e "remotes::install_version('${library.library}', version = '${library.version}')"\n`
+                    installLibsText += `RUN R -e "remotes::install_version('${library.library}', version = '${library.version}', repos='http://cran.rstudio.com/')"\n`
                 }
                 loadLibsText += `library(${library.library})\n`
             })
             await replaceTextInFile(`./utils/engines/docker/templates/predictive/R/Dockerfile`, '#<DEPENDENCIES>', installLibsText, `${folderPath}/Dockerfile`)
             await replaceTextInFile(`${folderPath}/Dockerfile`, '#<DOCKER_TAG>', docker_tag, `${folderPath}/Dockerfile`)
-            await replaceTextInFile(`./utils/engines/docker/templates/predictive/R/app.R`, '#<DEPENDENCIES>', loadLibsText, `${folderPath}/app.R`)
+            await replaceTextInFile(`./utils/engines/docker/templates/predictive/R/main.R`, '#<DEPENDENCIES>', loadLibsText, `${folderPath}/main.R`)
         }
     } else if (type == OPTIMIZATION) {
         if (language == PYTHON3) {
@@ -40,7 +40,21 @@ async function handleDockerEngine(type, language, serialization, docker_tag, dep
                 requirements += `${library.library}==${library.version}\n`
             })
             await fs.writeFileSync(`${folderPath}/requirements.txt`, requirements)
-            await fs.copyFileSync(`./utils/engines/docker/templates/optimization/Python3/Dockerfile`, `${folderPath}/Dockerfile`)
+            await replaceTextInFile(`./utils/engines/docker/templates/optimization/Python3/Dockerfile`, '#<DOCKER_TAG>', docker_tag, `${folderPath}/Dockerfile`)
+        }
+        if (language == R) {
+            let installLibsText = ''
+            let loadLibsText = ''
+            dependencies.forEach(library => {
+                if (library.version == 'latest') {
+                    installLibsText += `RUN R -e "install.packages('${library.library}', repos='http://cran.rstudio.com/')"\n`
+                } else {
+                    installLibsText += `RUN R -e "remotes::install_version('${library.library}', version = '${library.version}', repos='http://cran.rstudio.com/')"\n`
+                }
+                loadLibsText += `library(${library.library})\n`
+            })
+            await replaceTextInFile(`./utils/engines/docker/templates/optimization/R/Dockerfile`, '#<DEPENDENCIES>', installLibsText, `${folderPath}/Dockerfile`)
+            await replaceTextInFile(`${folderPath}/Dockerfile`, '#<DOCKER_TAG>', docker_tag, `${folderPath}/Dockerfile`)
         }
     }
 }

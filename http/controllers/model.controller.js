@@ -8,7 +8,7 @@ const { handleEngine } = require('../../utils/engines')
 
 async function getModels(req, res) {
     try {
-        const models = await ModelCatalogue.find({ deleted: false, user_id: req.user.id })
+        const models = await ModelCatalogue.find({ user_id: req.user.id, deleted: false })
         res.status(200).json(models)
     } catch (err) {
         logger.error(err)
@@ -18,8 +18,7 @@ async function getModels(req, res) {
 
 async function getModel(req, res, next) {
     try {
-        const id = req.params.id
-        let model = await ModelCatalogue.findOne({ _id: id, deleted: false }).populate('features').populate('dependencies')
+        let model = await ModelCatalogue.findOne({ _id: req.params.id, user_id: req.user.id, deleted: false }).populate('features').populate('dependencies')
         if (!model) model = {}
         res.status(200).json(model)
     } catch (err) {

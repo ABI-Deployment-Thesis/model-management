@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Run CLI
-ENTRYPOINT ["python", "app.py"]
+ENTRYPOINT ["python", "main.py"]

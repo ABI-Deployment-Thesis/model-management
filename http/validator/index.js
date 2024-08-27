@@ -62,7 +62,7 @@ const handlePredictiveModel = (language, extFileName) => {
 const handleOptimizationModel = async (language, extFileName, filePath) => {
     validateFileExtension(extFileName, COMPRESSION_FILE_TYPES, 'Invalid file type for optimization model')
 
-    const mainFileName = language === PYTHON3 ? 'main.py' : language === R ? 'main.r' : null
+    const mainFileName = language === PYTHON3 ? 'main.py' : language === R ? 'main.R' : null
     if (!mainFileName) throw new Error('Unsupported language for optimization model')
 
     const destPath = path.join(path.dirname(filePath), 'model')
@@ -223,7 +223,7 @@ const savePredDockerRModel = [
         try {
             req.body.type = PREDICTIVE
             req.body.engine = DOCKER
-            req.body.docker_tag = req.body.docker_tag == undefined ? '24.04' : req.body.docker_tag
+            req.body.docker_tag = req.body.docker_tag == undefined ? '4.1.3' : req.body.docker_tag
             req.body.cpu_percentage = req.body.cpu_percentage == undefined ? 500000000 : Number(req.body.cpu_percentage) * 10000000
             req.body.serialization = RDS
             req.body.language = R
@@ -263,7 +263,7 @@ const saveOptDockerPyModel = [
         } catch (err) {
             logger.error(err)
             deleteFile(req)
-            res.status(400).json({ error: 'features and dependencies must be a valid JSON array with correct structure' })
+            res.status(400).json({ error: 'dependencies must be a valid JSON array with correct structure' })
         }
     },
     fileNotEmpty,
@@ -275,9 +275,39 @@ const saveOptDockerPyModel = [
         .custom(validateDependencies),
     validate
 ]
+
+// Validator for saveOptDockerPyModel
+const saveOptDockerRModel = [
+    (req, res, next) => {
+        try {
+            req.body.type = OPTIMIZATION
+            req.body.engine = DOCKER
+            req.body.docker_tag = req.body.docker_tag == undefined ? '4.1.3' : req.body.docker_tag
+            req.body.cpu_percentage = req.body.cpu_percentage == undefined ? 500000000 : Number(req.body.cpu_percentage) * 10000000
+            req.body.language = R
+            req.body.features = []
+            req.body.dependencies = JSON.parse(req.body.dependencies)
+            next()
+        } catch (err) {
+            logger.error(err)
+            deleteFile(req)
+            res.status(400).json({ error: 'dependencies must be a valid JSON array with correct structure' })
+        }
+    },
+    fileNotEmpty,
+    body('name')
+        .isString().withMessage('Name must be a string')
+        .matches(NAME_REGEX).withMessage('Name must be between 2 and 50 characters')
+        .escape(),
+    body('dependencies')
+        .custom(validateDependencies),
+    validate
+]
+
 module.exports = {
     getModel,
     savePredDockerPyModel,
     savePredDockerRModel,
-    saveOptDockerPyModel
+    saveOptDockerPyModel,
+    saveOptDockerRModel
 }

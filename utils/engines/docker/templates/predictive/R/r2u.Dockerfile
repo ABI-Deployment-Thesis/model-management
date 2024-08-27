@@ -1,7 +1,8 @@
-FROM r-base:#<DOCKER_TAG>
+FROM rocker/r2u:#<DOCKER_TAG>
+RUN install.r Seurat
 
-RUN R -e "install.packages('jsonlite', repos='http://cran.rstudio.com/')"
-RUN R -e "install.packages('remotes', repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('jsonlite')"
+RUN R -e "install.packages('remotes')"
 #<DEPENDENCIES>
 
 # Create a directory for your R script and model file
