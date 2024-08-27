@@ -35,7 +35,7 @@ async function getModels(call, callback) {
         const authHeader = call.metadata.get('authorization')[0]
         const { id } = await jwt.decodeSessionToken(jwt.getTokenFromBearer(authHeader))
 
-        const models = await ModelCatalogue.find({ user_id: id }, { _id: 1, name: 1, deleted: 1 })
+        const models = await ModelCatalogue.find({ user_id: id }, { _id: 1, name: 1, type: 1, engine: 1, deleted: 1 })
         callback(null, { models: models })
     } catch (err) {
         logger.error(err)

@@ -1,5 +1,5 @@
 # Base image
-FROM python:3.9
+FROM python:#<DOCKER_TAG>
 
 # Set the working directory
 WORKDIR /app

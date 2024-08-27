@@ -8,7 +8,7 @@ const { handleEngine } = require('../../utils/engines')
 
 async function getModels(req, res) {
     try {
-        const models = await ModelCatalogue.find({ deleted: false, user_id: req.user.id })
+        const models = await ModelCatalogue.find({ user_id: req.user.id, deleted: false })
         res.status(200).json(models)
     } catch (err) {
         logger.error(err)
@@ -18,8 +18,7 @@ async function getModels(req, res) {
 
 async function getModel(req, res, next) {
     try {
-        const id = req.params.id
-        let model = await ModelCatalogue.findOne({ _id: id, deleted: false }).populate('features').populate('dependencies')
+        let model = await ModelCatalogue.findOne({ _id: req.params.id, user_id: req.user.id, deleted: false }).populate('features').populate('dependencies')
         if (!model) model = {}
         res.status(200).json(model)
     } catch (err) {
@@ -37,6 +36,9 @@ async function saveModel(req, res, next) {
         const name = req.body.name
         const type = req.body.type
         const engine = req.body.engine
+        const docker_tag = req.body.docker_tag
+        const mem_limit = req.body.mem_limit
+        const cpu_percentage = req.body.cpu_percentage
         const language = req.body.language
         const serialization = req.body.serialization
         const features = req.body.features
@@ -49,6 +51,9 @@ async function saveModel(req, res, next) {
             type: type,
             file_path: filePath,
             engine: engine,
+            docker_tag: docker_tag,
+            mem_limit: mem_limit,
+            cpu_percentage: cpu_percentage,
             language: language,
             serialization: serialization
         })
@@ -63,7 +68,7 @@ async function saveModel(req, res, next) {
         if (fs.lstatSync(filePath).isDirectory()) {
             destPath = filePath
         }
-        await handleEngine(engine, type, language, serialization, dependencies, destPath)
+        await handleEngine(engine, type, language, serialization, docker_tag, dependencies, destPath)
 
         await modelCatalogue.save()
         res.status(201).json({ message: `Model ${id} saved successfully` })
@@ -73,8 +78,9 @@ async function saveModel(req, res, next) {
         // error: TypeError: Cannot read properties of undefined (reading 'path')
         if (req.file && req.file.path) {
             const filePath = path.dirname(req.file.path)
-            if (fs.existsSync(filePath)) {
-                fs.rmSync(filePath, { recursive: true, force: true })
+            if (await fs.existsSync(filePath)) {
+                logger.debug(`Deleting folder '${filePath}'`)
+                await fs.rmSync(filePath, { recursive: true, force: true })
             }
         }
         res.status(400).json({ error: err })

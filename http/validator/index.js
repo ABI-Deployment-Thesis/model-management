@@ -4,7 +4,21 @@ const unzipper = require('unzipper')
 
 const { param, body, validationResult } = require('express-validator')
 
-const { PREDICTIVE, OPTIMIZATION, DOCKER, PYTHON3, R, FEATURE_TYPES, PY_SERIALIZATION_ALG, NAME_REGEX, PY_FILE_TYPES, R_FILE_TYPES, COMPRESSION_FILE_TYPES } = require('../../constants')
+const {
+    PREDICTIVE,
+    OPTIMIZATION,
+    DOCKER,
+    PYTHON3,
+    R,
+    RDS,
+    FEATURE_TYPES,
+    PY_SERIALIZATION_ALG,
+    NATIVE_SERIALIZATION_ALG,
+    NAME_REGEX,
+    PY_FILE_TYPES,
+    R_FILE_TYPES,
+    COMPRESSION_FILE_TYPES
+} = require('../../constants')
 
 // Utils
 const validate = (req, res, next) => {
@@ -48,7 +62,7 @@ const handlePredictiveModel = (language, extFileName) => {
 const handleOptimizationModel = async (language, extFileName, filePath) => {
     validateFileExtension(extFileName, COMPRESSION_FILE_TYPES, 'Invalid file type for optimization model')
 
-    const mainFileName = language === PYTHON3 ? 'main.py' : language === R ? 'main.r' : null
+    const mainFileName = language === PYTHON3 ? 'main.py' : language === R ? 'main.R' : null
     if (!mainFileName) throw new Error('Unsupported language for optimization model')
 
     const destPath = path.join(path.dirname(filePath), 'model')
@@ -147,11 +161,15 @@ const checkSerializationInDependencies = async (req, res, next) => {
     const dependencies = req.body.dependencies
     const serialization = req.body.serialization
     let hasSerialization = false
-    dependencies.forEach(dependency => {
-        if (dependency.library == serialization) {
-            hasSerialization = true
-        }
-    })
+    if (NATIVE_SERIALIZATION_ALG.includes(serialization)) { // Native language serialization algorithms
+        hasSerialization = true
+    } else {
+        dependencies.forEach(dependency => {
+            if (dependency.library == serialization) {
+                hasSerialization = true
+            }
+        })
+    }
     if (!hasSerialization) {
         await deleteFile(req)
         return res.status(400).json({ error: 'Dependencies must include the serialization library' })
@@ -172,6 +190,8 @@ const savePredDockerPyModel = [
         try {
             req.body.type = PREDICTIVE
             req.body.engine = DOCKER
+            req.body.docker_tag = req.body.docker_tag == undefined ? '3.9' : req.body.docker_tag
+            req.body.cpu_percentage = req.body.cpu_percentage == undefined ? 500000000 : Number(req.body.cpu_percentage) * 10000000
             req.body.language = PYTHON3
             req.body.features = JSON.parse(req.body.features)
             req.body.dependencies = JSON.parse(req.body.dependencies)
@@ -203,6 +223,9 @@ const savePredDockerRModel = [
         try {
             req.body.type = PREDICTIVE
             req.body.engine = DOCKER
+            req.body.docker_tag = req.body.docker_tag == undefined ? '4.1.3' : req.body.docker_tag
+            req.body.cpu_percentage = req.body.cpu_percentage == undefined ? 500000000 : Number(req.body.cpu_percentage) * 10000000
+            req.body.serialization = RDS
             req.body.language = R
             req.body.features = JSON.parse(req.body.features)
             req.body.dependencies = JSON.parse(req.body.dependencies)
@@ -231,6 +254,8 @@ const saveOptDockerPyModel = [
         try {
             req.body.type = OPTIMIZATION
             req.body.engine = DOCKER
+            req.body.docker_tag = req.body.docker_tag == undefined ? '3.9' : req.body.docker_tag
+            req.body.cpu_percentage = req.body.cpu_percentage == undefined ? 500000000 : Number(req.body.cpu_percentage) * 10000000
             req.body.language = PYTHON3
             req.body.features = []
             req.body.dependencies = JSON.parse(req.body.dependencies)
@@ -238,7 +263,7 @@ const saveOptDockerPyModel = [
         } catch (err) {
             logger.error(err)
             deleteFile(req)
-            res.status(400).json({ error: 'features and dependencies must be a valid JSON array with correct structure' })
+            res.status(400).json({ error: 'dependencies must be a valid JSON array with correct structure' })
         }
     },
     fileNotEmpty,
@@ -250,9 +275,39 @@ const saveOptDockerPyModel = [
         .custom(validateDependencies),
     validate
 ]
+
+// Validator for saveOptDockerPyModel
+const saveOptDockerRModel = [
+    (req, res, next) => {
+        try {
+            req.body.type = OPTIMIZATION
+            req.body.engine = DOCKER
+            req.body.docker_tag = req.body.docker_tag == undefined ? '4.1.3' : req.body.docker_tag
+            req.body.cpu_percentage = req.body.cpu_percentage == undefined ? 500000000 : Number(req.body.cpu_percentage) * 10000000
+            req.body.language = R
+            req.body.features = []
+            req.body.dependencies = JSON.parse(req.body.dependencies)
+            next()
+        } catch (err) {
+            logger.error(err)
+            deleteFile(req)
+            res.status(400).json({ error: 'dependencies must be a valid JSON array with correct structure' })
+        }
+    },
+    fileNotEmpty,
+    body('name')
+        .isString().withMessage('Name must be a string')
+        .matches(NAME_REGEX).withMessage('Name must be between 2 and 50 characters')
+        .escape(),
+    body('dependencies')
+        .custom(validateDependencies),
+    validate
+]
+
 module.exports = {
     getModel,
     savePredDockerPyModel,
     savePredDockerRModel,
-    saveOptDockerPyModel
+    saveOptDockerPyModel,
+    saveOptDockerRModel
 }

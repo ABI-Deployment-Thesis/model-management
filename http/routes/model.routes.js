@@ -12,5 +12,6 @@ router.post('/models/predictive/docker/python', isAuthenticated, utilsMulter.upl
 router.post('/models/predictive/docker/r', isAuthenticated, utilsMulter.uploadModel, validator.savePredDockerRModel, modelController.saveModel)
 
 router.post('/models/optimization/docker/python', isAuthenticated, utilsMulter.uploadModel, validator.saveOptDockerPyModel, modelController.saveModel)
+router.post('/models/optimization/docker/r', isAuthenticated, utilsMulter.uploadModel, validator.saveOptDockerRModel, modelController.saveModel)
 
 module.exports = router

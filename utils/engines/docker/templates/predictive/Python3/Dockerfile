@@ -1,5 +1,5 @@
 # Base image
-FROM python:3.9
+FROM python:#<DOCKER_TAG>
 
 # Set the working directory
 WORKDIR /app
@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Run CLI
-ENTRYPOINT ["python", "app.py"]
+ENTRYPOINT ["python", "main.py"]
