@@ -14,7 +14,7 @@
 
 <h2 align="center">ABI Deployment Thesis - Model Management</h2>
 
-Welcome to the model-management repository! This project is a key part of a master's thesis at the University of Minho. It's a Proof of Concept for a proposed architecture designed to deploy and integrate intelligent models within ABI (Adaptive Business Intelligence) systems.
+Welcome to the model-management repository! This project is a key part of a master's thesis at the University of Minho. It's a Proof of Concept for a proposed architecture designed to deploy and integrate intelligent models within Adaptive Business Intelligence (ABI) systems.
 
 **This repository provides the microservice responsible for intelligent models management.**
 
