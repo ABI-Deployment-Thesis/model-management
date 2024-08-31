@@ -19,11 +19,6 @@ const ModelCatalogueSchema = new Schema({
         enum: MODEL_TYPES,
         required: true
     },
-    file_path: {
-        type: String,
-        trim: true,
-        required: true
-    },
     engine: {
         type: String,
         trim: true,
@@ -31,11 +26,30 @@ const ModelCatalogueSchema = new Schema({
         required: true,
         default: 'docker'
     },
-    docker_tag: {
+    language: {
+        type: String,
+        trim: true,
+        enum: LANGUAGES.concat([NONE]),
+        required: true,
+        default: NONE
+    },
+    language_version: {
         type: String,
         trim: true,
         required: true,
         default: 'latest'
+    },
+    file_path: {
+        type: String,
+        trim: true,
+        required: true
+    },
+    serialization: {
+        type: String,
+        trim: true,
+        enum: SERIALIZATION_ALG.concat([NONE]),
+        required: true,
+        default: NONE
     },
     mem_limit: {
         type: String,
@@ -48,20 +62,6 @@ const ModelCatalogueSchema = new Schema({
         trim: true,
         required: true,
         default: 500000000
-    },
-    language: {
-        type: String,
-        trim: true,
-        enum: LANGUAGES.concat([NONE]),
-        required: true,
-        default: NONE
-    },
-    serialization: {
-        type: String,
-        trim: true,
-        enum: SERIALIZATION_ALG.concat([NONE]),
-        required: true,
-        default: NONE
     },
     dependencies: {
         type: [
