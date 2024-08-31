@@ -1,13 +1,13 @@
 const fs = require('fs')
 const { PREDICTIVE, OPTIMIZATION, DOCKER, PYTHON3, R } = require('./../../constants')
 
-async function handleEngine(engine, type, language, serialization, docker_tag, dependencies, folderPath) {
+async function handleEngine(engine, type, language, language_version, serialization, dependencies, folderPath) {
     if (engine == DOCKER) {
-        await handleDockerEngine(type, language, serialization, docker_tag, dependencies, folderPath)
+        await handleDockerEngine(type, language, language_version, serialization, dependencies, folderPath)
     }
 }
 
-async function handleDockerEngine(type, language, serialization, docker_tag, dependencies, folderPath) {
+async function handleDockerEngine(type, language, docker_tag, serialization, dependencies, folderPath) {
     if (type == PREDICTIVE) {
         if (language == PYTHON3) {
             let requirements = ''

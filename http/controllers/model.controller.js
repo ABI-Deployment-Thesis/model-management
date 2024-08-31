@@ -36,11 +36,11 @@ async function saveModel(req, res, next) {
         const name = req.body.name
         const type = req.body.type
         const engine = req.body.engine
-        const docker_tag = req.body.docker_tag
+        const language = req.body.language
+        const language_version = req.body.language_version
+        const serialization = req.body.serialization
         const mem_limit = req.body.mem_limit
         const cpu_percentage = req.body.cpu_percentage
-        const language = req.body.language
-        const serialization = req.body.serialization
         const features = req.body.features
         const dependencies = req.body.dependencies
 
@@ -49,14 +49,15 @@ async function saveModel(req, res, next) {
             user_id: user_id,
             name: name,
             type: type,
-            file_path: filePath,
             engine: engine,
-            docker_tag: docker_tag,
-            mem_limit: mem_limit,
-            cpu_percentage: cpu_percentage,
             language: language,
-            serialization: serialization
+            language_version: language_version,
+            file_path: filePath,
+            serialization: serialization,
+            mem_limit: mem_limit,
+            cpu_percentage: cpu_percentage
         })
+        await modelCatalogue.validate()
 
         const feature = await Feature.insertMany(features)
         const requirement = await Requirement.insertMany(dependencies)
@@ -68,7 +69,7 @@ async function saveModel(req, res, next) {
         if (fs.lstatSync(filePath).isDirectory()) {
             destPath = filePath
         }
-        await handleEngine(engine, type, language, serialization, docker_tag, dependencies, destPath)
+        await handleEngine(engine, type, language, language_version, serialization, dependencies, destPath)
 
         await modelCatalogue.save()
         res.status(201).json({ message: `Model ${id} saved successfully` })
