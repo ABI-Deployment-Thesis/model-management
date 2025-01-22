@@ -43,7 +43,31 @@ async function getModels(call, callback) {
     }
 }
 
+async function getModelByName(call, callback) {
+    try {
+        logger.debug(`Received gRPC call: ${JSON.stringify(call.request)}`)
+
+        const authHeader = call.metadata.get('authorization')[0]
+        const { id } = await jwt.decodeSessionToken(jwt.getTokenFromBearer(authHeader))
+
+        const { name } = call.request
+
+        let found = false
+        let model = ''
+        const modelCatalogue = await ModelCatalogue.findOne({ name: name, user_id: id, deleted: false }).populate('features').populate('dependencies')
+        if (modelCatalogue) {
+            found = true
+            model = JSON.stringify(modelCatalogue)
+        }
+        callback(null, { found: found, json_data: model })
+    } catch (err) {
+        logger.error(err)
+        callback(null, { found: false, json_data: '{}' })
+    }
+}
+
 module.exports = {
     getModel,
-    getModels
+    getModels,
+    getModelByName
 }

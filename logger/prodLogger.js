@@ -9,7 +9,7 @@ function buildProdLogger() {
             errors({ stack: true }),
             json()
         ),
-        defaultMeta: { service: 'user-service' },
+        defaultMeta: { service: process.env.SERVICE_NAME || 'model-management' },
         transports: [
             new transports.Console(),
             new transports.File({ filename: 'error.log', level: 'error' }),
