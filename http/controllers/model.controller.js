@@ -27,6 +27,17 @@ async function getModel(req, res, next) {
     }
 }
 
+async function getModelByName(req, res, next) {
+    try {
+        let model = await ModelCatalogue.findOne({ name: req.params.name, user_id: req.user.id, deleted: false }).populate('features').populate('dependencies')
+        if (!model) model = {}
+        res.status(200).json(model)
+    } catch (err) {
+        logger.error(err)
+        res.status(400).json({ error: err })
+    }
+}
+
 async function saveModel(req, res, next) {
     try {
         const id = req.temp.model_id
@@ -43,6 +54,11 @@ async function saveModel(req, res, next) {
         const cpu_percentage = req.body.cpu_percentage
         const features = req.body.features
         const dependencies = req.body.dependencies
+
+        let existingModel = await ModelCatalogue.findOne({ user_id: req.user.id, name: name, deleted: false })
+        if (existingModel) {
+            return res.status(400).json({ error: `A model with the name '${name}' already exists` })
+        }
 
         const modelCatalogue = await new ModelCatalogue({
             _id: id,
@@ -91,5 +107,6 @@ async function saveModel(req, res, next) {
 module.exports = {
     getModels,
     getModel,
+    getModelByName,
     saveModel
 }

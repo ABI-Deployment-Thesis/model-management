@@ -14,7 +14,11 @@ const protoDescriptor = grpc.loadPackageDefinition(packageDefinition)
 const ModelMgmtService = protoDescriptor.ModelMgmtService
 
 const server = new grpc.Server()
-server.addService(ModelMgmtService.service, { GetModel: modelController.getModel, GetModels: modelController.getModels })
+server.addService(ModelMgmtService.service, {
+    GetModel: modelController.getModel,
+    GetModels: modelController.getModels,
+    GetModelByName: modelController.getModelByName
+})
 
 const address = `0.0.0.0:${process.env.GRPC_PORT}`
 server.bindAsync(address, grpc.ServerCredentials.createInsecure(), () => {

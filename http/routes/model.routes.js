@@ -7,6 +7,7 @@ const validator = require('../validator')
 
 router.get('/models', isAuthenticated, modelController.getModels)
 router.get('/models/:id', isAuthenticated, validator.getModel, modelController.getModel)
+router.get('/models-by-name/:name', isAuthenticated, modelController.getModelByName)
 
 router.post('/models/predictive/docker/python', isAuthenticated, utilsMulter.uploadModel, validator.savePredDockerPyModel, modelController.saveModel)
 router.post('/models/predictive/docker/r', isAuthenticated, utilsMulter.uploadModel, validator.savePredDockerRModel, modelController.saveModel)
